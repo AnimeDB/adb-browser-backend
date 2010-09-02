@@ -61,6 +61,9 @@ class Poller(Service, object):
         yield threads.deferToThread(self.connection.close)
     
     def install(self, options):
+        # @todo: The following code is only an initial stub, we have to
+        #        actually execute the SQL
+        
         with open(os.path.join(os.path.dirname(__file__), 'conf', 'install.sql')) as fh:
             sql = fh.read()
         
