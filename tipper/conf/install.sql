@@ -1,5 +1,7 @@
 DELIMITER $$
 
+USE {master}$$
+
 DROP FUNCTION IF EXISTS Observed$$
 
 CREATE FUNCTION Observed (mythread INT(10))
@@ -41,9 +43,9 @@ CREATE TRIGGER release_inserts AFTER INSERT ON {master}.post
 	FOR EACH ROW BEGIN
 		IF Observed(NEW.threadid) AND FirstPost(NEW.postid, NEW.threadid) THEN
 			INSERT INTO {temp}.post_updates (
-				postid, threadid, userid, content, timestamp
+				postid, threadid, userid, content, timestamp, action
 			) VALUES (
-				NEW.postid, NEW.threadid, NEW.userid, NEW.pagetext, UNIX_TIMESTAMP(NOW())
+				NEW.postid, NEW.threadid, NEW.userid, NEW.pagetext, UNIX_TIMESTAMP(NOW()), 'inserted'
 			);
 		END IF;
 	END$$
@@ -55,11 +57,26 @@ CREATE TRIGGER release_updates AFTER UPDATE ON {master}.post
 	FOR EACH ROW BEGIN
 		IF Observed(NEW.threadid) AND FirstPost(NEW.postid, NEW.threadid) THEN
 			INSERT INTO {temp}.post_updates (
-				postid, threadid, userid, content, timestamp
+				postid, threadid, userid, content, timestamp, action
 			) VALUES (
-				NEW.postid, NEW.threadid, NEW.userid, NEW.pagetext, UNIX_TIMESTAMP(NOW())
+				NEW.postid, NEW.threadid, NEW.userid, NEW.pagetext, UNIX_TIMESTAMP(NOW()), 'updated'
+			);
+		END IF;
+	END$$
+
+
+DROP TRIGGER IF EXISTS release_deletes$$
+
+CREATE TRIGGER release_deletes AFTER DELETE ON {master}.post
+	FOR EACH ROW BEGIN
+		IF Observed(OLD.threadid) AND FirstPost(OLD.postid, OLD.threadid) THEN
+			INSERT INTO {temp}.post_updates (
+				postid, threadid, userid, content, timestamp, action
+			) VALUES (
+				OLD.postid, OLD.threadid, OLD.userid, OLD.pagetext, UNIX_TIMESTAMP(NOW()), 'deleted'
 			);
 		END IF;
 	END$$
 
 DELIMITER ;
+

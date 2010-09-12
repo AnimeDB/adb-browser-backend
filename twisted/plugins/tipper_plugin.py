@@ -40,13 +40,14 @@ class PollerFactory(object):
     implements(IServiceMaker, IPlugin)
     
     tapname = "tipper"
-    description = "Poller service for the AnimeDB MySQL backend which publish" \
+    description = "Poller service for the AnimeDB MySQL backend which publishes" \
                         " release updates to a service exposed over BERT-RPC"
     options = Options
     
     def makeService(self, options):
-        service = tipper.Poller(options['settings'])
+        service = tipper.Poller(options, options['settings'])
         
         return service
+
 
 serviceFactory = PollerFactory()
